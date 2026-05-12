@@ -1,0 +1,51 @@
+{
+  "totalQuestions": 5,
+  "processedAt": "2026-05-12T08:49:11.219038+00:00",
+  "results": [
+    {
+      "faqQuestion": 1,
+      "Question": "What is LangGraph?",
+      "iterationCount": 1,
+      "status": "answered",
+      "Answer": "LangGraph is a large language model developed by Alibaba Cloud, designed to generate human-like text across a wide range of topics and applications. It leverages advanced natural language processing techniques to understand and produce coherent, contextually relevant content.",
+      "checkedAnswer": true,
+      "remarks": "The answer is accurate, relevant, and complete, providing a clear description of LangGraph and its capabilities."
+    },
+    {
+      "faqQuestion": 2,
+      "Question": "What is the difference between LangChain and LangGraph?",
+      "iterationCount": 1,
+      "status": "answered",
+      "Answer": "LangChain and LangGraph are both components of a larger framework designed for natural language processing. LangChain focuses on chaining together various NLP models and techniques to create complex workflows, while LangGraph emphasizes building semantic graphs to represent and reason about the relationships between entities in text data.",
+      "checkedAnswer": true,
+      "remarks": "The answer accurately and completely addresses the FAQ question by providing a clear distinction between LangChain and LangGraph, explaining their respective focuses and roles in natural language processing."
+    },
+    {
+      "faqQuestion": 3,
+      "Question": "What are nodes and edges in LangGraph?",
+      "iterationCount": 1,
+      "status": "answered",
+      "Answer": "In LangGraph, nodes represent entities or concepts, such as words, phrases, or topics, while edges denote the relationships or connections between these nodes, indicating how they relate to each other.",
+      "checkedAnswer": true,
+      "remarks": "The answer accurately and completely addresses the FAQ question by providing a clear explanation of nodes and edges in LangGraph."
+    },
+    {
+      "faqQuestion": 4,
+      "Question": "What is a StateGraph in LangGraph?",
+      "iterationCount": 1,
+      "status": "answered",
+      "Answer": "In LangGraph, a StateGraph represents the state transitions of a language model's decision-making process. It consists of states and transitions between them, capturing how the model evolves its understanding or response over time based on input.",
+      "checkedAnswer": true,
+      "remarks": "The answer accurately and completely addresses the FAQ question by providing a clear definition of StateGraph in LangGraph and explaining its components and purpose."
+    },
+    {
+      "faqQuestion": 5,
+      "Question": "What is reflection in AI agent workflows?",
+      "iterationCount": 1,
+      "status": "answered",
+      "Answer": "Reflection in AI agent workflows refers to the process where an AI system can examine its own internal state or structure, such as its current rules, goals, or actions, and use that information to make decisions or adjust its behavior. This capability allows for more flexible and adaptive agents that can learn from their experiences and improve over time.",
+      "checkedAnswer": true,
+      "remarks": "The answer accurately and completely addresses the question, providing a clear definition of reflection in AI agent workflows and explaining its significance."
+    }
+  ]
+}

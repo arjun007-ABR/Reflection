@@ -1,0 +1,22 @@
+[
+  {
+    "faqQuestion": 1,
+    "Question": "What is LangGraph?"
+  },
+  {
+    "faqQuestion": 2,
+    "Question": "What is the difference between LangChain and LangGraph?"
+  },
+  {
+    "faqQuestion": 3,
+    "Question": "What are nodes and edges in LangGraph?"
+  },
+  {
+    "faqQuestion": 4,
+    "Question": "What is a StateGraph in LangGraph?"
+  },
+  {
+    "faqQuestion": 5,
+    "Question": "What is reflection in AI agent workflows?"
+  }
+]
