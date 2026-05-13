@@ -1,0 +1,282 @@
+# FAQ Reflection Agent
+
+A **LangGraph + LangChain** reflection agent that generates FAQ answers using a local Ollama model and validates them using Groq. Invalid answers are retried up to 3 times before being marked as unanswerable.
+
+---
+
+## Graph Flow
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                        START                            │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│                   load_question                         │
+│             reads from inputs/input.json                │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│          Node 1 — generate_answer                       │
+│          Model : Ollama · llama3.2 (local)              │
+│          Output: GeneratedAnswer { answer: str }        │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│          Node 2 — validate_answer                       │
+│          Model : Groq · llama-3.3-70b-versatile         │
+│          Output: ValidationResult { is_valid, remarks } │
+└────────────────────────┬────────────────────────────────┘
+                         │
+               ┌─────────▼──────────┐
+               │    is_valid?       │
+               └──┬─────────────┬───┘
+            yes   │             │  no
+                  │             │
+                  │    ┌────────▼──────────────────┐
+                  │    │  iteration_count < 3?     │
+                  │    └──┬──────────────────────┬─┘
+                  │  yes  │                      │ no (exhausted)
+                  │       │                      │
+                  │       └──► generate_answer   │
+                  │             (retry loop)     │
+                  │                              │
+                  └──────────┬───────────────────┘
+                             │
+                             ▼
+               ┌─────────────────────────────────────┐
+               │            save_result               │
+               │  answered   → status = "answered"   │
+               │  exhausted  → status = "no_answer"  │
+               │               Answer = "-"          │
+               └──────────────────┬──────────────────┘
+                                  │
+                        ┌─────────▼──────────┐
+                        │  more questions?   │
+                        └──┬──────────────┬──┘
+                      yes  │              │  no
+                           │              │
+                           ▼              ▼
+                    generate_answer    write output.json
+                    (next question)         │
+                                           ▼
+                                          END
+```
+
+### Retry Logic
+
+Each question gets up to **3 generation attempts**.
+
+| Attempt | Outcome |
+|---|---|
+| Answer valid | Save immediately, move to next question |
+| Answer invalid, attempt < 3 | Re-generate with Ollama |
+| Answer invalid, attempt = 3 | Save as `status = "no_answer"`, `Answer = "-"` |
+
+---
+
+## Project Structure
+
+```
+faq_reflection_agent/
+│
+├── inputs/
+│   └── input.json          ← 5 FAQ questions (edit these)
+│
+├── outputs/
+│   └── output.json         ← generated at runtime
+│
+├── nodes/
+│   ├── __init__.py
+│   ├── generation.py       ← Node 1: generate_answer (Ollama)
+│   └── validator.py        ← Node 2: validate_answer (Groq)
+│
+├── state.py                ← Pydantic schemas + AgentState TypedDict
+├── llm.py                  ← LLM client setup (Ollama + Groq)
+├── graph.py                ← StateGraph, save_result, routing logic
+├── main.py                 ← Entry point (load → run → save)
+│
+├── requirements.txt
+├── .env
+└── README.md
+```
+
+### File Responsibilities
+
+| File | Responsibility |
+|---|---|
+| `state.py` | `GeneratedAnswer`, `ValidationResult`, `FAQResult` Pydantic models + `AgentState` TypedDict |
+| `llm.py` | Initialises `generator_llm` (Ollama) and `validator_llm` (Groq) with `.with_structured_output()` |
+| `nodes/generation.py` | Generator node — calls Ollama, returns structured answer |
+| `nodes/validator.py` | Validator node — calls Groq, returns `is_valid` + `remarks` |
+| `graph.py` | Builds `StateGraph`, registers nodes, defines conditional routing, handles `save_result` |
+| `main.py` | Loads `input.json`, invokes the compiled graph, writes `output.json` |
+
+---
+
+## Setup
+
+### 1. Install Ollama (local LLM — free, no API key)
+
+Download from https://ollama.com/download, then pull a model:
+
+```bash
+ollama pull llama3.2
+```
+
+Verify Ollama is running by visiting http://localhost:11434 — it should say `Ollama is running`.
+
+### 2. Get a Groq API key (free)
+
+Sign up at https://console.groq.com/keys and create an API key.
+
+### 3. Create a virtual environment
+
+```bash
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+```
+
+### 4. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 5. Configure .env
+
+```env
+# Groq API key
+GROQ_API_KEY=your_groq_api_key_here
+
+# Ollama (local — no API key needed)
+OLLAMA_MODEL=llama3.2
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+### 6. Run
+
+```bash
+python main.py
+```
+
+---
+
+## Input Format
+
+Edit `inputs/input.json` with your FAQ questions:
+
+```json
+[
+  { "faqQuestion": 1, "Question": "What is LangGraph?" },
+  { "faqQuestion": 2, "Question": "What is a StateGraph?" }
+]
+```
+
+---
+
+## Output Format
+
+Results are saved to `outputs/output.json`:
+
+```json
+{
+  "totalQuestions": 5,
+  "processedAt": "2024-01-15T10:30:00+00:00",
+  "results": [
+    {
+      "faqQuestion": 1,
+      "Question": "What is LangGraph?",
+      "iterationCount": 1,
+      "status": "answered",
+      "Answer": "LangGraph is a library for building stateful, multi-actor applications...",
+      "checkedAnswer": true,
+      "remarks": "Answer is factually correct and directly addresses the question."
+    },
+    {
+      "faqQuestion": 2,
+      "Question": "...",
+      "iterationCount": 3,
+      "status": "no_answer",
+      "Answer": "-",
+      "checkedAnswer": false,
+      "remarks": "No valid answer after maximum retries."
+    }
+  ]
+}
+```
+
+### Sample Output
+
+![title of image](outputs/SS.png)
+
+### Status Values
+
+| Status | Meaning | checkedAnswer |
+|---|---|---|
+| `answered` | Generated and validated successfully | true |
+| `no_answer` | All 3 retries exhausted | false |
+
+---
+
+## Models
+
+| Node | Provider | Model | Purpose |
+|---|---|---|---|
+| `generate_answer` | Ollama (local) | `llama3.2` | Generates FAQ answers |
+| `validate_answer` | Groq (cloud) | `llama-3.3-70b-versatile` | Validates accuracy & relevance |
+
+To use a different Ollama model, update `OLLAMA_MODEL` in `.env`:
+
+```env
+OLLAMA_MODEL=mistral
+OLLAMA_MODEL=gemma2
+OLLAMA_MODEL=phi3
+```
+
+---
+
+## Key Components
+
+| Component | Usage |
+|---|---|
+| `StateGraph` | LangGraph graph with typed `AgentState` |
+| `with_structured_output()` | Pydantic schemas enforced on both LLMs |
+| `add_conditional_edges` | Retry loop + next-question routing |
+| `GeneratedAnswer` | Structured output schema for Ollama |
+| `ValidationResult` | Structured output schema for Groq |
+| `FAQResult` | Final output entry schema |
+| `python-dotenv` | Loads API keys from `.env` |
+
+---
+
+## Dependencies
+
+```
+langchain>=0.3.0
+langchain-ollama>=0.2.0
+langchain-groq>=0.2.0
+langgraph>=0.2.0
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+```
+
+---
+
+## Troubleshooting
+
+**Connection refused on Ollama**
+Make sure Ollama is running: open a terminal and run `ollama serve`, or check http://localhost:11434.
+
+**Model not found error**
+Pull the model first: `ollama pull llama3.2`
+
+**Groq 401 Unauthorized**
+Check that `GROQ_API_KEY` is set correctly in `.env`.
+
+**All questions getting no_answer**
+The validator may be too strict. Check `nodes/validator.py` — the validation rules only check factual correctness, relevance, and minimum length (1 sentence). Length or style are not penalised.
+
