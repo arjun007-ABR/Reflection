@@ -1,11 +1,11 @@
 [
   {
     "faqQuestion": 1,
-    "Question": "What is LangGraph?"
+    "Question": "What is an ai model?"
   },
   {
     "faqQuestion": 2,
-    "Question": "What is the difference between LangChain and LangGraph?"
+    "Question": "What came first hen or egg?"
   },
   {
     "faqQuestion": 3,
@@ -13,10 +13,10 @@
   },
   {
     "faqQuestion": 4,
-    "Question": "What is a StateGraph in LangGraph?"
+    "Question": "Which is the best fragrance you had every smelled?"
   },
   {
     "faqQuestion": 5,
-    "Question": "What is reflection in AI agent workflows?"
+    "Question": "What is 2 + 2 ?"
   }
 ]
