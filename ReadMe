@@ -209,6 +209,10 @@ Results are saved to `outputs/output.json`:
 }
 ```
 
+### Sample Output
+
+![title of image](outputs/SS.png)
+
 ### Status Values
 
 | Status | Meaning | checkedAnswer |
@@ -276,4 +280,3 @@ Check that `GROQ_API_KEY` is set correctly in `.env`.
 **All questions getting no_answer**
 The validator may be too strict. Check `nodes/validator.py` — the validation rules only check factual correctness, relevance, and minimum length (1 sentence). Length or style are not penalised.
 
-![title of image](outputs/SS.png)
